@@ -1,0 +1,33 @@
+# Root .gitignore for the TACC Tapis Portal monorepo.
+# Per-project .gitignore files under tacc-portal-backend/ and
+# tacc-portal-copilot-app/ still apply; these are repo-wide safety nets.
+
+# OS
+.DS_Store
+
+# Python
+**/__pycache__/
+**/*.py[oc]
+**/.venv/
+**/build/
+**/dist/
+**/*.egg-info/
+
+# Node / Next.js
+**/node_modules/
+**/.next/
+**/out/
+**/*.tsbuildinfo
+**/next-env.d.ts
+
+# Secrets / local environment (keep any *.env.example)
+**/.env
+**/.env.*
+!**/.env.example
+
+# Built vector store (produced by app.rag.ingest; not source)
+**/my_chroma_db/
+*.chroma
+
+# Jupyter
+**/.ipynb_checkpoints/

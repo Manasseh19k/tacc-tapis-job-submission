@@ -1,0 +1,26 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.env
+
+
+# env files (can opt-in for committing if needed)
+.env*
+
+**/.env
+**/etc/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Chroma vector store (built by app.rag.ingest; not source)
+my_chroma_db/
+*.chroma
