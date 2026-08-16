@@ -37,7 +37,7 @@ def _build_submit_body(spec: "JobSpec") -> dict[str, Any]:
     Optional fields are only included when set, so Tapis falls back to the
     app/system defaults for anything the spec left blank rather than being
     handed empty overrides. ``spec.parameters`` (a name->value dict) maps to
-    ``parameterSet.appArgs`` — the app-argument channel; container args and
+    ``parameterSet.appArgs``, the app-argument channel; container args and
     scheduler options are not expressible through the current flat
     ``JobSpec`` and would need a richer spec shape to support.
     """

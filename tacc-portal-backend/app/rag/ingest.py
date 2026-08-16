@@ -1,16 +1,3 @@
-"""Offline ingestion pipeline for the knowledge base.
-
-It can be run as a standalone script, not from a request handler — ingestion is slow,
-network-bound, and does not belong in a user's conversation turn. USE CASE:
-
-    uv run python -m app.rag.ingest --source ./docs
-    uv run python -m app.rag.ingest --url https://tapis.readthedocs.io/en/latest/technical/jobs.html
-    uv run python -m app.rag.ingest --source ./docs --reset
-
-The output is the Chroma collection that :mod:`app.rag.store` serves at query
-time.
-"""
-
 import argparse
 import hashlib
 import logging
@@ -27,7 +14,7 @@ _SUPPORTED_EXTENSIONS = {".md", ".txt", ".html", ".htm", ".pdf"}
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 
-# tiktoken is only a size proxy here — the real embedding model tokenizes
+# tiktoken is a size proxy, the real embedding model tokenizes
 # differently, but cl100k gives a stable, fast token estimate for sizing chunks.
 _ENCODER: "tiktoken.Encoding | None" = None
 
@@ -91,6 +78,7 @@ def load_sources(root: Path) -> list[SourceDocument]:
 
 
 def _read_file_text(path: Path) -> str:
+    """Read a file and return its plain-text content, converting from markup if needed."""
     ext = path.suffix.lower()
     if ext in {".md", ".txt"}:
         return path.read_text(encoding="utf-8", errors="replace")
@@ -102,6 +90,7 @@ def _read_file_text(path: Path) -> str:
 
 
 def _read_pdf(path: Path) -> str:
+    """Extract text from a PDF file."""
     try:
         import pypdf
     except ImportError as exc:  # pragma: no cover - optional dependency
@@ -113,12 +102,7 @@ def _read_pdf(path: Path) -> str:
 
 
 def _html_to_text(html: str) -> str:
-    """Extract the main article text from an HTML page, dropping chrome.
-
-    Strips script/style/nav/header/footer/aside — for ReadTheDocs pages that
-    removes the sidebar navigation, which would otherwise flood the index with
-    hundreds of near-identical low-signal chunks.
-    """
+    """Extract the main article text from an HTML page, dropping chrome."""
     from bs4 import BeautifulSoup
 
     soup = BeautifulSoup(html, "html.parser")
@@ -129,12 +113,7 @@ def _html_to_text(html: str) -> str:
 
 
 def fetch_web_sources(urls: list[str], *, delay_seconds: float = 0.5) -> list[SourceDocument]:
-    """Fetch and clean remote documentation pages.
-
-    Retrieves each URL sequentially (with a small politeness delay), isolates
-    the main article body, and returns one cleaned document per successful
-    fetch.
-    """
+    """Fetch and clean remote documentation pages."""
     import httpx
 
     from bs4 import BeautifulSoup
@@ -166,12 +145,7 @@ def fetch_web_sources(urls: list[str], *, delay_seconds: float = 0.5) -> list[So
 
 
 def _segment(text: str) -> list[tuple[str, str]]:
-    """Split text into ``(heading_path, paragraph)`` pairs.
-
-    Markdown headings update a running heading stack; blank lines separate
-    paragraphs. Every paragraph is tagged with the ``a > b > c`` heading path
-    it sits under, so chunking can keep a section together and label it.
-    """
+    """Split text into ``(heading_path, paragraph)`` pairs."""
     segments: list[tuple[str, str]] = []
     stack: list[tuple[int, str]] = []
     buffer: list[str] = []
@@ -202,16 +176,7 @@ def _segment(text: str) -> list[tuple[str, str]]:
 
 
 def chunk_document(doc: SourceDocument, *, max_tokens: int = 512, overlap: int = 64) -> list[SourceDocument]:
-    """Split a document into retrieval-sized passages.
-
-    Splits on structure first (headings, then paragraphs), packing paragraphs
-    into chunks up to ``max_tokens`` and carrying ``overlap`` tokens across
-    boundaries so a passage straddling a split is retrievable from either side.
-    A single oversized paragraph is hard-split at the token limit. Each chunk's
-    text is prefixed with the document title and heading path, because chunks
-    are retrieved in isolation and "run this with --force" is useless without
-    the context naming what it applies to.
-    """
+    """Split a document into retrieval-sized passages."""
     enc = _encoder()
     title = (doc.metadata.get("title") or doc.source).strip()
     chunks: list[SourceDocument] = []
@@ -234,7 +199,7 @@ def chunk_document(doc: SourceDocument, *, max_tokens: int = 512, overlap: int =
 
     for heading_path, paragraph in _segment(doc.text):
         # A heading change closes the current chunk cleanly (no overlap carried
-        # across sections — the sections are about different things).
+        # across sections, the sections are about different things).
         if heading_path != current_heading:
             if current:
                 add_chunk(current_heading or "", current)
@@ -348,3 +313,17 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+"""Offline ingestion pipeline for the knowledge base.
+
+It can be run as a standalone script, not from a request handler — ingestion is slow,
+network-bound, and does not belong in a user's conversation turn. USE CASE:
+
+    uv run python -m app.rag.ingest --source ./docs
+    uv run python -m app.rag.ingest --url https://tapis.readthedocs.io/en/latest/technical/jobs.html
+    uv run python -m app.rag.ingest --source ./docs --reset
+
+The output is the Chroma collection that :mod:`app.rag.store` serves at query
+time.
+"""

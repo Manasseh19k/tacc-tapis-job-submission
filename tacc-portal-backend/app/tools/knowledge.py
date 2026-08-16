@@ -45,7 +45,7 @@ async def search_documentation(
 
     Call this for questions about how Tapis works, what an app or parameter
     means, queue policies, or general HPC usage. Do *not* call it for questions
-    about the user's own files or jobs — those need the files and jobs tools,
+    about the user's own files or jobs, those need the files and jobs tools,
     which query live state. """
     store = ctx.deps.knowledge
     if store is None:

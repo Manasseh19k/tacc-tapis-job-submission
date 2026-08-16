@@ -4,8 +4,8 @@ import { useInterrupt } from "@copilotkit/react-core/v2";
 
 /**
  * Mirrors the metadata dict built in `cancel_job` (app/tools/jobs.py):
- * `{"job_uuid": ..., "name": ..., "status": ...}`. snake_case on purpose —
- * `interrupt.metadata` is a passthrough Record, not a camelCased model.
+ * `{"job_uuid": ..., "name": ..., "status": ...}`.
+ * `interrupt.metadata` is a passthrough Record.
  */
 interface CancelTarget {
   job_uuid: string;
@@ -60,8 +60,6 @@ export function CancelJobCard() {
           </dl>
 
           <div className="mt-5 flex gap-3">
-            {/* Destructive action is the secondary button on purpose: the
-                safe choice should be the one you hit by reflex. */}
             <button
               onClick={() => cancel()}
               className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-black px-5 text-sm font-medium text-white transition-colors hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80"

@@ -87,6 +87,7 @@ def _tenant_id_from_url(tenant_url: str) -> str:
 
 
 async def _fetch_public_key_uncached(tenant_url: str) -> str:
+    """Fetch the public key for a tenant from its Tapis API, without caching."""
     settings = get_settings()
     tenant_id = _tenant_id_from_url(tenant_url)
 
@@ -209,7 +210,7 @@ async def verify_token(token: str) -> dict[str, Any]:
             )
         except jwt.InvalidSignatureError:
             if attempt == 1:
-                # Possible key rotation — drop the cached key and try once more.
+                # Possible key rotation, drop the cached key and try once more.
                 logger.info("JWT signature check failed; refreshing tenant public key.")
                 _public_key_cache.invalidate(tenant_url)
                 continue

@@ -55,6 +55,7 @@ def summarize_tapis_error(exc: Exception) -> str:
 
 
 def redact(payload: Any) -> Any:
+    """Recursively redact sensitive keys in a dictionary or list."""
     if isinstance(payload, dict):
         return {
             key: redact(value) if key.lower() not in _SENSITIVE_KEYS else "<REDACTED>"

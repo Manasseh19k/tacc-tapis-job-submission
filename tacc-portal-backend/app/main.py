@@ -103,13 +103,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app(agent: Any = None) -> FastAPI:
+    """Create the FastAPI app, optionally with a prebuilt agent."""
     settings = get_settings()
     app = FastAPI(title="TACC Portal Agent", lifespan=lifespan)
 
     if agent is not None:
         app.state.agent = agent
 
-    # Off by default: the browser never calls this service directly — the
+    # Off by default: the browser never calls this service directly, the
     # Next.js CopilotKit route proxies server-side.
     if settings.allowed_origins:
         app.add_middleware(
@@ -146,7 +147,7 @@ async def agent_endpoint(request: Request) -> Response:
     logger.info("agent run for user=%s", user.username)
 
     # message_history and deferred_tool_results are deliberately NOT passed.
-    # The adapter reads both off the AG-UI request body — including the
+    # The adapter reads both off the AG-UI request body, including the
     # resume[] array carrying the user's approve/deny decision, which it maps
     # to DeferredToolResults deny-by-default. Passing them explicitly here
     # overrides that and breaks the approval round trip.
@@ -158,6 +159,7 @@ async def agent_endpoint(request: Request) -> Response:
 
 
 async def health_endpoint(request: Request) -> JSONResponse:
+    """Return a simple JSON health check."""
     knowledge = getattr(request.app.state, "knowledge", None)
     chunks = None
     if knowledge is not None:
@@ -166,7 +168,6 @@ async def health_endpoint(request: Request) -> JSONResponse:
         except Exception:
             chunks = None
 
-    # Counts and booleans only — no config values, no tenant internals.
     return JSONResponse(
         {
             "status": "ok",

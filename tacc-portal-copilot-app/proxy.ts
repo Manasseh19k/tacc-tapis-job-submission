@@ -20,7 +20,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Run on everything EXCEPT the auth routes, Next internals, and static assets.
+  // Run on everything EXCEPT the auth routes.
   matcher: [
     "/((?!auth|api/copilotkit|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],

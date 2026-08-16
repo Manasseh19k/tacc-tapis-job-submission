@@ -1,0 +1,20 @@
+# Keep the build context small and avoid shipping local/build artifacts and
+# secrets. The Dockerfile copies explicit paths and rebuilds deps, so none of
+# these are needed in the image.
+
+**/node_modules
+**/.venv
+**/.next
+**/out
+**/my_chroma_db
+*.chroma
+**/__pycache__
+**/*.py[oc]
+**/.git
+**/.gitignore
+**/.env
+**/.env.*
+**/*.tsbuildinfo
+**/next-env.d.ts
+.DS_Store
+**/.DS_Store

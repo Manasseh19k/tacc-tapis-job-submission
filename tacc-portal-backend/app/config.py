@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     # OpenAI-compatible inference endpoint
     base_url: str | None = None
     openai_api_key: str | None = None
-    llm_provider: str = "openai"  # or "tapis"
+    llm_provider: str = "openai"
     # NoDecode: stop pydantic-settings from trying to JSON-parse this from the
     # environment, so ALLOWED_ORIGINS can be written as a plain comma-separated
     # list rather than a JSON array.

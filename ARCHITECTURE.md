@@ -19,10 +19,6 @@ One git repository with two ends of the project (backend and frontend):
 | `tacc-portal-backend`     | Python 3.13, FastAPI, Pydantic AI, LiteLLM, tapipy, ChromaDB (uv-managed) | The AG-UI agent service. Owns Tapis API calls, the agent/tools, and RAG.        |
 | `tacc-portal-copilot-app` | Next.js 16, React 19, CopilotKit v2 (uv/npm)                              | The web UI: Tapis OAuth login, the chat surface, and the Gen-UI approval cards. |
 
-This document lives at the repository root (alongside `tacc-portal-backend/`
-and `tacc-portal-copilot-app/`) and describes both, because the request flow
-spans them.
-
 ## Request flow
 
 ```
@@ -32,18 +28,18 @@ browser
   ▼
 Next.js  app/api/copilotkit/route.ts
   │  reads the httpOnly Tapis cookie; 401 if absent.
-  │  CopilotRuntime → HttpAgent POST to the backend, forwarding header
+  │  CopilotRuntime -> HttpAgent POST to the backend, forwarding header
   │  X-Tapis-Token: <jwt>.
   ▼
 FastAPI  app/main.py   POST /
-  │  security.get_current_user   → verify the JWT (signature, exp, iss, tenant, token_type)
-  │  tapis_client.build_user_client → per-request tapipy client bound to that token
-  │  deps.AgentDeps               → user + client + shared vector store
+  │  security.get_current_user   -> verify the JWT (signature, exp, iss, tenant, token_type)
+  │  tapis_client.build_user_client -> per-request tapipy client bound to that token
+  │  deps.AgentDeps               -> user + client + shared vector store
   ▼
 _ApprovalReconcilingAGUIAdapter.dispatch_request(agent=..., deps=...)
   │  streams AG-UI events (SSE) back to CopilotKit
   ▼
-agent tools → Tapis API (as the user)  /  Chroma (unauthenticated docs retrieval)
+agent tools -> Tapis API (as the user)  /  Chroma (unauthenticated docs retrieval)
 ```
 
 For an approval-gated action (submit/cancel), the run _ends_ with a pending
@@ -59,11 +55,11 @@ each is verified.
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `config.py`          | `Settings` (pydantic-settings). The only reader of the environment. Loads `etc/.env` then `.env`. Validates the LLM endpoint (a custom `base_url` requires `openai_api_key`).                                                                                                                      | Done                                                                                 |
 | `security.py`        | Auth boundary. Verifies the forwarded Tapis JWT with the tenant's RS256 public key (cached, TTL, refreshed on signature failure); checks `exp`/`iss`/tenant/`token_type`. Yields `AuthenticatedUser` (redacted repr). `AuthError` for 401s.                                                        | Done, verified live                                                                  |
-| `tapis_client.py`    | `build_user_client(user)` → a tapipy `Tapis` bound to the user's token (no login, no service account). `summarize_tapis_error` maps tapipy exceptions to short, user-safe strings. `redact` scrubs credential-bearing keys before logging. `TapisClientError`.                                     | Done, verified live                                                                  |
-| `deps.py`            | `AgentDeps` — carries the per-request `user`, `tapis` client, and shared `knowledge` store into tools via `RunContext`. No shared per-user state.                                                                                                                                                  | Done                                                                                 |
+| `tapis_client.py`    | `build_user_client(user)` -> a tapipy `Tapis` bound to the user's token (no login, no service account). `summarize_tapis_error` maps tapipy exceptions to short, user-safe strings. `redact` scrubs credential-bearing keys before logging. `TapisClientError`.                                    | Done, verified live                                                                  |
+| `deps.py`            | `AgentDeps` -> carries the per-request `user`, `tapis` client, and shared `knowledge` store into tools via `RunContext`. No shared per-user state.                                                                                                                                                 | Done                                                                                 |
 | `tools/files.py`     | `list_systems` (uses `listType="ALL"`), `list_files` (returns `FileListing` with a `truncated` flag), `read_file` (byte-capped, binary-detecting).                                                                                                                                                 | Done; `list_systems` verified live                                                   |
 | `tools/jobs.py`      | Apps + Jobs tools: `list_apps` (`listType="ALL"`), `describe_app`, `validate_job_spec`, `submit_job`, `submit_job_request` (raw-JSON path), `build_job_request`, `get_job_status`, `list_jobs`, `get_job_output`, `cancel_job`. `submit_job`/`submit_job_request`/`cancel_job` are approval-gated. | Done; structured submit verified live (real job UUID). Cancel + raw-JSON unit-tested |
-| `tools/knowledge.py` | `search_documentation` — RAG retrieval tool. Filters at `_MIN_SCORE`, degrades to `found=False` on empty/failure.                                                                                                                                                                                  | Done, verified against live endpoint                                                 |
+| `tools/knowledge.py` | `search_documentation` —> RAG retrieval tool. Filters at `_MIN_SCORE`, degrades to `found=False` on empty/failure.                                                                                                                                                                                 | Done, verified against live endpoint                                                 |
 | `rag/store.py`       | `VectorStore` over Chroma (cosine). `_SingleInputOpenAIEmbeddingFunction` embeds one string per request (endpoint requires it — see gotchas). E5 query-instruction prefix applied query-side.                                                                                                      | Done, verified                                                                       |
 | `rag/ingest.py`      | Offline pipeline + CLI: load (`.md/.txt/.html`; `.pdf` optional), fetch (httpx+bs4), structure-aware chunk (tiktoken), stable ids, upsert. Idempotent.                                                                                                                                             | Done, verified                                                                       |
 | `agent.py`           | `build_model` (LiteLLM), `build_agent` (tools, `output_type=[str, DeferredToolRequests]`, `retries=2`), `_surface_tapis_errors` wrapper, system prompt.                                                                                                                                            | Done, verified live                                                                  |
@@ -125,7 +121,7 @@ ctx.tool_call_approved`) — they are **not** registered with
 
 ## Hard-won integration constraints
 
-These each broke the end-to-end flow during development. Preserve them.
+These each broke the end-to-end flow for the development.
 
 - **Frontend and backend must use the same Tapis tenant.** `TAPIS_TENANT_URL`
   in the frontend `.env.local` and backend `etc/.env` must match, or the backend
@@ -139,7 +135,7 @@ These each broke the end-to-end flow during development. Preserve them.
   streaming (what the AG-UI adapter does) then crashes.
 - **CopilotKit `agents` must be a plain object, not a factory function** in
   `app/api/copilotkit/route.ts` — the runtime does `Object.keys(agents)`; a
-  function yields `[]` → "No default agent provided".
+  function yields `[]` -> "No default agent provided".
 - **Approval resume needs `_ApprovalReconcilingAGUIAdapter`** (`main.py`).
   CopilotKit's `useInterrupt` both injects a `role="tool"` message AND sends
   `resume[]`; Pydantic AI then sees a tool-return for a call it's also resuming
@@ -159,7 +155,7 @@ the uppercased `Settings` attributes:
 | Var                          | Default                  | Notes                                                                   |
 | ---------------------------- | ------------------------ | ----------------------------------------------------------------------- |
 | `TAPIS_TENANT_URL`           | `https://tacc.tapis.io`  | Must match the frontend tenant. Set to `https://portals.tapis.io`.      |
-| `BASE_URL`                   | (none)                   | OpenAI-compatible inference endpoint (chat + embeddings).               |
+| `BASE_URL`                   | (none)                   | OpenAI-compatible inference endpoint (chat and embeddings).             |
 | `OPENAI_API_KEY`             | (none)                   | Required when `BASE_URL` is set.                                        |
 | `LLM_MODEL`                  | `gpt-oss-120b`           | Chat model (LiteLLM).                                                   |
 | `EMBEDDING_MODEL`            | `E5-Mistral-7B-Instruct` | Must match at ingest and query time.                                    |
@@ -176,24 +172,7 @@ the uppercased `Settings` attributes:
 
 Neither `.env` file is committed.
 
-## Running locally
-
-Backend (from `tacc-portal-backend/`):
-
-```bash
-uv sync
-uv run uvicorn app.main:app --port 8000     # GET /health to check
-```
-
-Frontend (from `tacc-portal-copilot-app/`):
-
-```bash
-npm install
-npm run dev                                  # must bind port 3000
-```
-
-Populate the knowledge base (optional; docs Q&A returns "I don't know" until you
-do — the app runs fine without it):
+Populate the knowledge base (optional; docs Q&A returns "I don't know" until it is populated, the app runs fine without it):
 
 ```bash
 uv run python -m app.rag.ingest --url https://tapis.readthedocs.io/en/latest/technical/jobs.html --reset
@@ -205,17 +184,11 @@ uv run python -m app.rag.ingest --url https://tapis.readthedocs.io/en/latest/tec
 
 ## What's left / next steps
 
-- **Browser-verify the cancel and raw-JSON submit flows** (implemented +
-  unit-tested; the structured submit is confirmed live and shares the same
-  resume path).
+- **Browser-verify the cancel and raw-JSON submit flows**
+- (implemented; the structured submit is confirmed live and shares the same resume path).
 - **Tune RAG on a real corpus:** `_MIN_SCORE` (0.45, set from a tiny sample) and
-  `chunk_document` sizes want validation against real Tapis docs and questions.
+  `chunk_document` sizes can validate against real Tapis docs and questions.
 - **`pypdf`** is an optional dependency — `uv add pypdf` if PDF sources are needed.
-- **`JobSpec` is intentionally flat.** The raw-JSON path (`build_job_request` +
+- **`JobSpec` is intentionally flat.** The raw-JSON path (`build_job_request` and
   `submit_job_request`) is the escape hatch for fields it can't express
   (container args, env vars, scheduler options, file-input arrays, subscriptions).
-- No automated test suite yet; verification so far is manual + ad-hoc scripts.
-
-```
-
-```

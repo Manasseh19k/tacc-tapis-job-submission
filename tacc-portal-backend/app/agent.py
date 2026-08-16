@@ -65,8 +65,8 @@ SYSTEM_PROMPT = """\
    - submit_job_request is also approval-gated; the same approval prompt applies.
 """
 
-# Tools that never mutate anything. Safe to register unconditionally.
-# build_job_request only renders JSON (no Tapis call), so it belongs here.
+# Tools that never mutate anything.
+# build_job_request only renders JSON (no Tapis call).
 _READ_ONLY_TOOLS = [
     list_systems, list_files, read_file,
     list_apps, describe_app, validate_job_spec, build_job_request,
@@ -75,7 +75,6 @@ _READ_ONLY_TOOLS = [
 
 # Tools that consume allocation or destroy work. Each gates itself internally
 # via `if not ctx.tool_call_approved: raise ApprovalRequired(metadata=...)`.
-# Registered as PLAIN tools on purpose — see build_agent.
 _APPROVAL_GATED_TOOLS = [submit_job, submit_job_request, cancel_job]
 
 

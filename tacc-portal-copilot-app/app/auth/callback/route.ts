@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { COOKIE, exchangeCodeForToken, getConfig } from "@/lib/tapis";
 
 /**
- * Step 2 of the authorization code flow.
+ * Second step of the authorization code flow.
  * Tapis redirects here with ?code=...&state=.... It verify the state matches
  * the cookie set in /auth/login, exchange the code for a Tapis JWT, and store
  * the token(s) in httpOnly cookies.

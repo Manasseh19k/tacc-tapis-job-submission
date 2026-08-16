@@ -25,7 +25,6 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      {/* min-h-full + flex-col: page.tsx's root uses flex-1 and needs a flex parent. */}
       <body className="min-h-full flex flex-col">
         <CopilotKit
           runtimeUrl="/api/copilotkit"

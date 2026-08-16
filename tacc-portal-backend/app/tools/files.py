@@ -6,8 +6,7 @@ from app.deps import AgentDeps
 from app.tapis_client import TapisClientError, summarize_tapis_error
 
 # Hard cap on directory entries returned per list_files call, and on jobs
-# fetched per page from Tapis (requested as +1 to detect truncation without a
-# separate call — see list_files).
+# fetched per page from Tapis.
 _MAX_LIST_ENTRIES = 200
 
 
@@ -49,6 +48,7 @@ def _normalize_path(path: str) -> str:
 
 
 async def list_systems(ctx: RunContext[AgentDeps]) -> list[dict[str, str]]:
+    """List Tapis systems available to the user, returning a list of dicts with keys"""
     try:
         systems = ctx.deps.tapis.systems.getSystems(
             listType="ALL", select="id,host,systemType,description"
@@ -127,12 +127,12 @@ async def read_file(
     content_bytes = bytes(raw[:max_bytes])
 
     if b"\x00" in content_bytes:
-        return f"[{path} looks like a binary file — not displaying contents.]"
+        return f"[{path} looks like a binary file, not displaying contents.]"
 
     try:
         text = content_bytes.decode("utf-8")
     except UnicodeDecodeError:
-        return f"[{path} looks like a binary file — not displaying contents.]"
+        return f"[{path} looks like a binary file, not displaying contents.]"
 
     if truncated:
         text += f"\n\n[... truncated at {max_bytes} bytes ...]"

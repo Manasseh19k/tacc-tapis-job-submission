@@ -15,7 +15,7 @@ export interface TapisConfig {
   postLoginPath: string;
 }
 
-/** Read + validate the Tapis config from environment variables. */
+/** Read and validate the Tapis config from environment variables. */
 export function getConfig(): TapisConfig {
   const tenantBaseUrl = requiredEnv("TAPIS_TENANT_URL").replace(/\/+$/, "");
   const clientId = requiredEnv("TAPIS_CLIENT_ID");
@@ -55,7 +55,7 @@ export interface TapisTokenResult {
 
 /**
  * Exchange an authorization code for a Tapis JWT.
- * POST {tenant}/v3/oauth2/tokens with the code + HTTP Basic client auth.
+ * POST {tenant}/v3/oauth2/tokens with the code and HTTP Basic client auth.
  */
 export async function exchangeCodeForToken(
   cfg: TapisConfig,

@@ -3,7 +3,7 @@ import { randomBytes } from "crypto";
 import { COOKIE, buildAuthorizeUrl, getConfig } from "@/lib/tapis";
 
 /**
- * Step 1 of the authorization code flow.
+ * First step of the authorization code flow.
  * Generate a random state, remember it in an httpOnly cookie, and redirect the
  * user to the Tapis authorization server.
  */
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   const secure = request.nextUrl.protocol === "https:";
 
   // `lax` (not `strict`) so the cookie survives the cross-site redirect back
-  // from tapis.io to our /auth/callback.
+  // from tapis.io to the /auth/callback.
   response.cookies.set(COOKIE.state, state, {
     httpOnly: true,
     secure,

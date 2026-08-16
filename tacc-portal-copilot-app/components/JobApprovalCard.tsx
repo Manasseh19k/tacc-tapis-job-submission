@@ -22,8 +22,8 @@ interface JobSpec {
   archive_system_id: string | null;
 }
 
-/** Structural check — this is how to tell a submit_job interrupt apart from
- * any other approval-gated tool that might show up later, without parsing
+/** Structural check, this is how to tell a submit_job interrupt apart from
+ * any other approval-gated tool, without parsing
  * the human-readable interrupt message. */
 function isJobSpec(metadata: unknown): metadata is JobSpec {
   const m = metadata as Record<string, unknown> | undefined;
