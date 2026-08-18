@@ -317,7 +317,7 @@ if __name__ == "__main__":
 
 """Offline ingestion pipeline for the knowledge base.
 
-It can be run as a standalone script, not from a request handler — ingestion is slow,
+It can be run as a standalone script, not from a request handler; ingestion is slow,
 network-bound, and does not belong in a user's conversation turn. USE CASE:
 
     uv run python -m app.rag.ingest --source ./docs
